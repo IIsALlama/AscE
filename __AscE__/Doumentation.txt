@@ -1,0 +1,189 @@
+==Scripts==
+AscE.py
+-The AscE game engine files
+-You may edit this to make modifications to the engine, but isn't needed
+
+Scenes.py
+-A script to create different scenes in
+-A scene is created by creating a class inheriting from "Scene"
+-In the scene's __init__(thisScene) function, the parent class "Scene"'s __init__
+    function must be called using: Scene.__init__(thisScene, index=0)
+    -index must be a unique number for each scene.
+    -index 0 will be loaded on game start
+-Objects are created in the scene using: thisScene.sceneObjects.append().
+    -Inside append, a game object must be passed in
+-All scenes must have a camera object
+
+-EXAMPLE SCENE
+class ExampleScene(Scene):
+    def __init__(thisScene):
+        Scene.__init__(thisScene, index=0)
+        thisScene.sceneObjects.append(obj("Player",
+                     [Transform((10, 10)),
+                     QuadRenderer(1, "blue", (2, 2)),
+                     TopDownMovement("Player", 75)]))
+        thisScene.sceneObjects.append(obj("Camera",
+                     [Transform((0, 0)),
+                      Camera((25, 25))]))
+
+Components.py
+-A script to creat different components in
+-A component is created by creating a class inheriting from "Component"
+-In the components's __init__(self) function, the parent class "Scene"'s __init__
+    function must be called using: Component.__init__(self, dependancies=[])
+    -dependancies is an array of required components. These components
+	will be added automatically. (e.g dependancies=[Transform()])
+-All components must have OnUpdate(self) and OnAwake(self) functions
+-OnUpdate(self) runs once per game frame
+-OnAwake(self) runs when the object is loaded
+
+EXAMPLE COMPONENT
+class ExampleComponent(Component):
+    def __init__(self):
+	self.ExampleVariable = 0
+        Component.__init__(self, [Transform()])
+    def OnUpdate(self):
+        self.ExampleFunction()
+    def OnAwake(self):
+        pass
+    def ExampleFunction(self):
+	self.ExampleVariable += 1
+
+
+run.py
+-This script runs the game
+-Errors are show by running the script in python IDLE
+-To play the game, run the file not within python IDLE
+-You may edit this to make modifications to the engine, but isn't needed
+
+build.py
+-Builds game into /dist/build.exe
+
+install_requirements.py
+-Installs required modules for AscE to run
+
+==BUILT-IN COMPONENTS==
+Component(dependancies=[])
+    -Generic component class
+    -Variables:
+	-dependancies (array): the required components for this to function
+	-type (class type): the type of component
+    -Functions:
+	-OnUpdate(): Ran once per fram
+	-OnAwake(): Ran on object creation
+
+Camera(size=(25,25))
+    -Renders the screen (Required for every scene)
+    Variables:
+        -size (tuple): the width and height of the game screen
+    Functions:
+	-RenderView(Renderers): Returns an array of pixel data in it's view
+	    -Renderers (obj array): Objects with renderer components
+
+Transform(position=(0,0))
+    -Gives an object a position within the scene
+    Variables:
+	-position (tuple): X and Y position of the object
+	-roundedPosition (tuple): rounded position of the object used for rendering
+	-startPosition (tuple): The position the object started at
+    Functions:
+	-ReturnToStartPos(): Moves object back to it's starting position
+	-MoveToPosition(position): Moves object to position
+	    -position (tuple): Position to move to
+	-RoundPositions(position): Returns the rounded position
+	    -position (tuple): Position to round
+
+Renderer(renderingPriority=0, colour="white")
+    -Renders an object on the screen
+    Variables:
+	-renderingPriority (int): What the object will render above or below
+	-colour (string): The colour of the object
+    Functions:
+	-GetPixels(position): Returns an array of subpixel data
+	    position(tuple): Current position of object
+
+QuadRenderer(renderingPriority=0, colour="white", size=(1,1))
+    -Renders a square or rectangle shape
+    -Inherits from Renderer
+    Variables:
+	-size (tuple): width and height of the quad
+
+SpriteRenderer(renderingPriority=0, colour="white", sprite=["╔═╗",
+                                                            "╚═╝"])
+    -Renders a sprite made from Ascii characters
+    -Inherits from Renderer
+    Variables:
+	-sprite (string array): The sprite of the object. 
+	    Each item in the array is one layer of the sprite
+	    (index 0 is top layer)
+
+TopDownMovement(thisObjectName, speed=1)
+    -A basic top down character controller using left, right, up, down keys
+    Variables:
+	-thisObjectName(string): name of the object the component is on
+	-thisObject(string/obj): "null" or the current object the component is on
+	-speed(float): Movement speed of the object
+
+==Classes==
+pixel(position=(0,0), subpixels=[])
+    -Pixel data for rendering
+    Variables:
+	-positions(tuple): The position of the pixel
+	-subpixels(subpixel array): All pixels from objects on that point
+    Functions:
+	-GetCharacter(): Gets the subpixel with the highest rendering 
+	    priority and returns it's character
+	-GetColour():Gets the subpixel with the highest rendering 
+	    priority and returns it's colour
+
+subpixel(position=(0,0), character="  ", priority=0, colour="white")
+    -Sub pixel data for rendering
+    Variables:
+	-character(string): The Ascii characters of the sub pixel
+	-position(tuple): position of the pixel
+	-priority(int): rendering priority of the sub pixel
+	-colour(string): colour of the sub pixel
+
+Scene(index=0)
+    -Base scene class
+    Variables:
+	-sceneIndex(int): Index of the scene
+	-sceneObjects(obj array): objects in the scene
+
+obj(name="New Object", components=[])
+    -Game Object class
+    Variables:
+	-name(string): Name of the object
+	-components: All of the the components on the object
+    Functions:
+	-AddComponent(component): Adds a component to the object
+	    -component(Component): Component to add
+	-RemoveComponent(component): Removes a component from the object
+	    -component(Component): Component to remove
+	-GetComponent(component):Returns component of type "component"
+	    -component(class type): component type to find
+
+==BUILT-IN FUNCTIONS==
+GetKey(key): Returns bool for if key "key" is pressed down
+    -key(string): Key to check for
+
+FindObject(name): Returns the first game object with name (Returns "null" if not found)
+    -name(string): Name of object to find
+
+FindObjectsWithComponent(componentType): Returns array of all objects with component
+    -componentType(class type): Component to look for
+
+FindObjectWithComponent(componentType): Returns first object with component (Returns "null if not found")
+    -componentType(class type): Component to look for
+
+DeltaTime(): Returns time since last frame
+
+UpdateFrameTime(t): Update the time since last frame (calling this can break DeltaTime())
+    -t(float): Time to change to
+
+ClearFrame(): Clears current frame
+
+UpdateFrame(): Renders new frame to screen from first Camera object
+
+LoadScene(sceneIndex): Loads the scene with sceneIndex
+    -sceneIndex(int): Scene to load

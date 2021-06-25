@@ -1,0 +1,3 @@
+{
+    "python.analysis.extraPaths": ["__AscE__", "__AscE__/Libs"]
+}
