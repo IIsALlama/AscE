@@ -12,7 +12,7 @@ class ExampleScene(Scene):
 
         thisScene.sceneObjects.append(obj("Text",
                      [Transform(Vect2(-12, -12)),
-                     SpriteRenderer(2, "white", ["AscE Game"])]))
+                     SpriteRenderer(2, "white", ["AscE Game "])]))
 
         thisScene.sceneObjects.append(obj("Player",
                      [Transform(Vect2(10, 10)),

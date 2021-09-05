@@ -38,7 +38,7 @@ class Camera(Component):
                             y.subpixels.append(subpixels[i])
         return pixels
 
-class pixel():#Not a component
+class pixel():
     def __init__(self, position=Vect2(0,0), subpixels=[]):
         self.position = position
         self.subpixels = subpixels

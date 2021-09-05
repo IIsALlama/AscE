@@ -32,11 +32,6 @@ def DestroyObject(obj):
     objects.remove(obj)
     return obj
 
-def CreateObject(obj):
-    global objects
-    objects.append(obj)
-    return obj
-    
 def FindObject(name):#Find an object by it's name
     for x in range(len(objects)):
         if (objects[x].name == name):

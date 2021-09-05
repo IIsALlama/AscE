@@ -1,8 +1,4 @@
 ==Scripts==
-AscE.py
--The AscE game engine files
--You may edit this to make modifications to the engine, but isn't needed
-
 Scenes.py
 -A script to create different scenes in
 -A scene is created by creating a class inheriting from "Scene"
@@ -36,10 +32,14 @@ Components.py
 -All components must have OnUpdate(self) and OnAwake(self) functions
 -OnUpdate(self) runs once per game frame
 -OnAwake(self) runs when the object is loaded
+-gameObject will reference the game object the component is on
+-type should be set to the parent class if it is the child of another component, 
+    or itself if it is not a child of another component
 
 EXAMPLE COMPONENT
 class ExampleComponent(Component):
     def __init__(self):
+	self.type = ExampleComponent
 	self.ExampleVariable = 0
         Component.__init__(self, [Transform()])
     def OnUpdate(self):
@@ -52,15 +52,12 @@ class ExampleComponent(Component):
 
 run.py
 -This script runs the game
--Errors are show by running the script in python IDLE
+-Errors are shown by running the script in python IDLE
 -To play the game, run the file not within python IDLE
 -You may edit this to make modifications to the engine, but isn't needed
 
 build.py
 -Builds game into /dist/build.exe
-
-install_requirements.py
--Installs required modules for AscE to run
 
 ==BUILT-IN COMPONENTS==
 Component(dependancies=[])
@@ -72,41 +69,47 @@ Component(dependancies=[])
 	-OnUpdate(): Ran once per fram
 	-OnAwake(): Ran on object creation
 
-Camera(size=(25,25))
+Camera(size=Vect2(25,25))
     -Renders the screen (Required for every scene)
+    Dependancies:
+	-Transform
     Variables:
-        -size (tuple): the width and height of the game screen
+        -size (Vect2): the width and height of the game screen
     Functions:
 	-RenderView(Renderers): Returns an array of pixel data in it's view
 	    -Renderers (obj array): Objects with renderer components
 
-Transform(position=(0,0))
+Transform(position=Vect2(0,0))
     -Gives an object a position within the scene
     Variables:
-	-position (tuple): X and Y position of the object
-	-roundedPosition (tuple): rounded position of the object used for rendering
-	-startPosition (tuple): The position the object started at
+	-position (Vect2): X and Y position of the object
+	-roundedPosition (Vect2): rounded position of the object used for rendering
+	-startPosition (Vect2): The position the object started at
+	-positionLock (tuple): Used for collision
     Functions:
 	-ReturnToStartPos(): Moves object back to it's starting position
 	-MoveToPosition(position): Moves object to position
-	    -position (tuple): Position to move to
+	    -position (Vect2): Position to move to
 	-RoundPositions(position): Returns the rounded position
-	    -position (tuple): Position to round
+	    -position (Vect2): Position to round
 
 Renderer(renderingPriority=0, colour="white")
     -Renders an object on the screen
+    -Dependancies:
+	-Transform
     Variables:
 	-renderingPriority (int): What the object will render above or below
 	-colour (string): The colour of the object
     Functions:
 	-GetPixels(position): Returns an array of subpixel data
-	    position(tuple): Current position of object
+	    position(Vect2): Current position of object
 
-QuadRenderer(renderingPriority=0, colour="white", size=(1,1))
+QuadRenderer(renderingPriority=0, colour="white", size=Vect2(1,1))
     -Renders a square or rectangle shape
     -Inherits from Renderer
     Variables:
-	-size (tuple): width and height of the quad
+	-size (Vect2): width and height of the quad
+	-usesLight (bool): whether to be affected by lighting or not
 
 SpriteRenderer(renderingPriority=0, colour="white", sprite=["╔═╗",
                                                             "╚═╝"])
@@ -117,18 +120,51 @@ SpriteRenderer(renderingPriority=0, colour="white", sprite=["╔═╗",
 	    Each item in the array is one layer of the sprite
 	    (index 0 is top layer)
 
-TopDownMovement(thisObjectName, speed=1)
+TopDownMovement(speed=1)
     -A basic top down character controller using left, right, up, down keys
+    Dependancies:
+	-Transform 
     Variables:
-	-thisObjectName(string): name of the object the component is on
-	-thisObject(string/obj): "null" or the current object the component is on
 	-speed(float): Movement speed of the object
 
+BoxCollider(isTrigger=False, size=Vect2(1,1))
+    -Gives an object collision in a quad shape
+    Dependancies:
+	-Transform
+    Variables:
+	-size(Vect2): Size of the collider
+	-isTrigger(bool): currently unused
+    Functions:
+	-IsCollidingWithOther(thisPosition, otherCollider, otherColliderPosition): Returns true if is colliding with otherCollider
+	    thisPosition(Vect2): position of collider
+	    otherCollider(Collider): collider to check
+	    otherColliderPosition(Vect2): position of otherCollider
+
+Light(lightRadius=1, isDynamic=False)
+    -Changes the lighting of quad renderers around it in a certain radius
+    Dependancies:
+	-Transform
+    Variables:
+	-radius(int): radius of the light circle
+	-isDynamic(bool): will the position of the light change
+	-lightingPixels(array): holds baked lighting data
+	-baked(bool): has the light been baked
+    Functions:
+	-BakeLights(camSize): Bakes lighting
+	    camSize(Vect2): size of the camera
+	-ReturnCharacterFromValue(value): gives the Ascii character for the lighting level
+		value(float): lighting value from 0 to 1
+	-CalculateLightingForPixel(pixelPos, forceDynamic=False): calculates the light level for a pixel, or returns baked data for the pixel
+		pixelPos(Vect2): position of the pixel
+		forceDynamic(bool): force the lighting calculation to not use the baked data, and recalculate it
+		
+	
+
 ==Classes==
-pixel(position=(0,0), subpixels=[])
+pixel(position=Vect2(0,0), subpixels=[])
     -Pixel data for rendering
     Variables:
-	-positions(tuple): The position of the pixel
+	-positions(Vect2): The position of the pixel
 	-subpixels(subpixel array): All pixels from objects on that point
     Functions:
 	-GetCharacter(): Gets the subpixel with the highest rendering 
@@ -136,11 +172,11 @@ pixel(position=(0,0), subpixels=[])
 	-GetColour():Gets the subpixel with the highest rendering 
 	    priority and returns it's colour
 
-subpixel(position=(0,0), character="  ", priority=0, colour="white")
+subpixel(position=Vect2(0,0), character="  ", priority=0, colour="white")
     -Sub pixel data for rendering
     Variables:
 	-character(string): The Ascii characters of the sub pixel
-	-position(tuple): position of the pixel
+	-position(Vect2): position of the pixel
 	-priority(int): rendering priority of the sub pixel
 	-colour(string): colour of the sub pixel
 
@@ -149,6 +185,12 @@ Scene(index=0)
     Variables:
 	-sceneIndex(int): Index of the scene
 	-sceneObjects(obj array): objects in the scene
+
+Vect2(x=0, y=0)
+    -Used for x and y coordinates
+    Variables:
+	-x(int): X coordinate
+	-y(int): Y coordinate
 
 obj(name="New Object", components=[])
     -Game Object class
@@ -167,14 +209,31 @@ obj(name="New Object", components=[])
 GetKey(key): Returns bool for if key "key" is pressed down
     -key(string): Key to check for
 
-FindObject(name): Returns the first game object with name (Returns "null" if not found)
+MousePos(): Returns mouse position
+
+GetLeftClick(): Returns true if left click is pressed
+
+GetRightClick(): Returns true if right click is pressed
+
+DestroyObject(obj): Destroys object
+    -obj(obj): object to destroy
+
+FindObject(name): Returns the first game object with name (Returns None if not found)
     -name(string): Name of object to find
 
 FindObjectsWithComponent(componentType): Returns array of all objects with component
     -componentType(class type): Component to look for
 
-FindObjectWithComponent(componentType): Returns first object with component (Returns "null if not found")
+FindObjectWithComponent(componentType): Returns first object with component (Returns None if not found)
     -componentType(class type): Component to look for
+
+FindClosestObjectWithComponent(pos, componentType): Returns closest object with component (Returns None if not found)
+    -componentType(class type): Component to look for
+    -pos(Vect2): position to search from
+
+DistanceBetween(pos1, pos2): Returns the distance bewteen two positons
+    -pos1(Vect2): 1st Position
+    -pos2(Vect2): 2nd Position
 
 DeltaTime(): Returns time since last frame
 
@@ -187,3 +246,5 @@ UpdateFrame(): Renders new frame to screen from first Camera object
 
 LoadScene(sceneIndex): Loads the scene with sceneIndex
     -sceneIndex(int): Scene to load
+
+CurrentScene(): Returns current scene index
