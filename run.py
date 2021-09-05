@@ -37,6 +37,7 @@ def UpdateCode():#Update function runs every 0.01 seconds + time to run code for
                     pass
         UpdateFrame()
         if (debug):
+            print("Scene : " + scenes[CurrentScene()].__name__)
             print("Delta Time : " + str(DeltaTime()))
             print("==Active Objects==")
             print(len(objects), "active objects")

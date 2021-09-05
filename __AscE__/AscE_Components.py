@@ -1,12 +1,18 @@
 import AscE
 
+class Vect2():
+    def __init__(self, x=0, y=0):
+        self.x = x
+        self.y = y
+
 class Component():
     def __init__(self, dependancies=[]):
+        self.gameObject = None
         self.dependancies = dependancies
         self.OnAwake()
 
 class Camera(Component):
-    def __init__(self, size=(25,25)):
+    def __init__(self, size=Vect2(25, 25)):
         self.type = Camera
         self.size = size
         Component.__init__(self, [Transform()])
@@ -15,24 +21,25 @@ class Camera(Component):
     def OnAwake(self):
         pass
     def RenderView(self, Renderers):
+        position = self.gameObject.GetComponent(Transform).position
         pixels = []
-        for x in range(self.size[0]):
+        for x in range(position.x - AscE.math.floor(self.size.x/2), position.x + AscE.math.ceil(self.size.x/2)):
             temp = []
-            for y in range(self.size[1]):
-                temp.append(pixel((x,y), []))
+            for y in range(position.y - AscE.math.floor(self.size.y/2), position.y + AscE.math.ceil(self.size.y/2)):
+                temp.append(pixel(Vect2(x,y), []))
             pixels.append(temp)
         for x in range(len(Renderers)):
             subpixels = Renderers[x].GetComponent(Renderer).GetPixels(Renderers[x].GetComponent(Transform).roundedPosition)
             for i in range(len(subpixels)):
                 pos = subpixels[i].position
-                try:
-                    pixels[pos[0]][pos[1]].subpixels.append(subpixels[i])
-                except:
-                    pass
+                for x in pixels:
+                    for y in x:
+                        if (y.position.x == subpixels[i].position.x and y.position.y == subpixels[i].position.y):
+                            y.subpixels.append(subpixels[i])
         return pixels
 
 class pixel():#Not a component
-    def __init__(self, position=(0,0), subpixels=[]):
+    def __init__(self, position=Vect2(0,0), subpixels=[]):
         self.position = position
         self.subpixels = subpixels
     def GetCharacter(self):
@@ -49,14 +56,14 @@ class pixel():#Not a component
         return current.colour
 
 class subpixel():#Not a component
-    def __init__(self, position=(0,0), character="  ", priority=0, colour="white"):
+    def __init__(self, position=Vect2(0,0), character="  ", priority=0, colour="white"):
         self.character = character[:2]
         self.position = position
         self.priority = priority
         self.colour = colour
 
 class Transform(Component):
-    def __init__(self, position=(0,0)):
+    def __init__(self, position=Vect2(0,0)):
         self.type = Transform
         self.position = position
         self.roundedPosition = self.RoundPosition(position)
@@ -68,25 +75,24 @@ class Transform(Component):
     def OnAwake(self):
         pass
     def RoundPosition(self, position):
-        return (round(position[0]), round(position[1]))
+        return Vect2(round(position.x), round(position.y))
     def ReturnToStartPos(self):
         self.position = self.startPosition
     def MoveToPosition(self, position):
-        x, y = self.position[0], self.position[1]
-        if (self.position[0] < position[0] and self.positionLock[0] == False):
-            x = position[0]
-        if (self.position[0] > position[0] and self.positionLock[1] == False):
-            x = position[0]
-        if (self.position[1] < position[1] and self.positionLock[2] == False):
-            y = position[1]
-        if (self.position[1] > position[1] and self.positionLock[3] == False):
-            y = position[1]
-        self.position = (x, y)
+        x, y = self.position.x, self.position.y
+        if (self.position.x < position.x and self.positionLock[0] == False):
+            x = position.x
+        if (self.position.x > position.x and self.positionLock[1] == False):
+            x = position.x
+        if (self.position.y < position.y and self.positionLock[2] == False):
+            y = position.y
+        if (self.position.y > position.y and self.positionLock[3] == False):
+            y = position.y
+        self.position = Vect2(x, y)
 
 class Light(Component):
-    def __init__(self, thisObjectName, lightRadius=1, isDynamic=False):
+    def __init__(self, lightRadius=1, isDynamic=False):
         self.radius = lightRadius
-        self.thisObjectName = thisObjectName
         self.type = Light
         self.isDynamic = isDynamic
         self.lightingPixels = []
@@ -100,10 +106,10 @@ class Light(Component):
         pass
     def BakeLights(self, camSize):
         if (not self.isDynamic):
-            for x in range(camSize[0]):
+            for x in range(camSize.x):
                 temp = []
-                for y in range(camSize[1]):
-                    temp.append(self.CalculateLightingForPixel((x, y), True))
+                for y in range(camSize.y):
+                    temp.append(self.CalculateLightingForPixel(Vect2(x, y), True))
                 self.lightingPixels.append(temp)
     def ReturnCharacterFromValue(self, value):
         if (value < 0.25):
@@ -118,12 +124,12 @@ class Light(Component):
             return "  "
     def CalculateLightingForPixel(self, pixelPos, forceDynamic=False):
         if (self.isDynamic or forceDynamic):
-            thisPosition = AscE.FindObject(self.thisObjectName).GetComponent(Transform).position
-            distFromLight = (((thisPosition[0] - pixelPos[0]) ** 2) + ((thisPosition[1] - pixelPos[1]) ** 2)) ** 0.5
+            thisPosition = self.gameObject.GetComponent(Transform).position
+            distFromLight = (((thisPosition.x - pixelPos.x) ** 2) + ((thisPosition.y - pixelPos.y) ** 2)) ** 0.5
             val = distFromLight / self.radius
             return val
         else:
-            return self.lightingPixels[pixelPos[0]][pixelPos[1]]
+            return self.lightingPixels[pixelPos.x][pixelPos.y]
 
 class Renderer(Component):
     def __init__(self, renderingPriority=0, colour="white"):
@@ -139,7 +145,7 @@ class Renderer(Component):
         return []
 
 class QuadRenderer(Renderer):
-    def __init__(self, renderingPriority=0, colour="white", size=(1,1), usesLight=False):
+    def __init__(self, renderingPriority=0, colour="white", size=Vect2(1,1), usesLight=False):
         self.type = Renderer
         self.size = size
         self.usesLight = usesLight
@@ -150,16 +156,16 @@ class QuadRenderer(Renderer):
         pass
     def GetPixels(self, position):
         filledPoses = []
-        for x in range(position[0], position[0] + self.size[0]):
-            for y in range(position[1], position[1] + self.size[1]):
+        for x in range(position.x, position.x + self.size.x):
+            for y in range(position.y, position.y + self.size.y):
                 char = "██"
                 if (self.usesLight):
-                    light = AscE.FindClosestObjectWithComponent((x,y), Light).GetComponent(Light)
-                    value = light.CalculateLightingForPixel((x, y), False)
+                    light = AscE.FindClosestObjectWithComponent(Vect2(x,y), Light).GetComponent(Light)
+                    value = light.CalculateLightingForPixel(Vect2(x, y), False)
                     char = light.ReturnCharacterFromValue(value)
                     if (char == ""):
                         char = "  "
-                filledPoses.append(subpixel((x, y), char, self.renderingPriority, self.colour))
+                filledPoses.append(subpixel(Vect2(x, y), char, self.renderingPriority, self.colour))
         return filledPoses
 
 class SpriteRenderer(Renderer):
@@ -176,87 +182,76 @@ class SpriteRenderer(Renderer):
         filledPoses = []
         for y in range(len(self.sprite)):
             for x in range(0, round(len(self.sprite[y])/2)):
-                filledPoses.append(subpixel((position[0] + x, position[1] + y), self.sprite[y][x*2:], self.renderingPriority, self.colour))
+                filledPoses.append(subpixel(Vect2(position.x + x, position.y + y), self.sprite[y][x*2:], self.renderingPriority, self.colour))
         return filledPoses
 
 class BoxCollider(Component):
-    def __init__(self, thisObjectName, isTrigger=False, size=(1, 1)):
+    def __init__(self, isTrigger=False, size=Vect2(1, 1)):
         self.type = BoxCollider
         self.size = size
         self.isTrigger = isTrigger
-        self.thisObjectName = thisObjectName
-        self.thisTransform = "null"
         Component.__init__(self, [Transform()])
     def OnUpdate(self):
-        if (self.thisTransform == "null"):
-            self.thisTransform = AscE.FindObject(self.thisObjectName)
-            if (self.thisTransform != "null"):
-                self.thisTransform = self.thisTransform.GetComponent(Transform)
-        else:
-            self.thisTransform.positionLock = (False, False, False, False)
-            cs = AscE.FindObjectsWithComponent(BoxCollider)
-            for x in range(len(cs)):
-                if (cs[x].GetComponent(BoxCollider) != self):
-                    otherBC = cs[x].GetComponent(BoxCollider)
-                    otherT = cs[x].GetComponent(Transform)
-                    otherT = otherT.RoundPosition(otherT.position)
-                    thisPos = self.thisTransform.RoundPosition(self.thisTransform.position)
-                    if (self.IsCollidingWithOther(thisPos, otherBC, otherT)):
-                        newLock = (False, False, False, False)
-                        if (thisPos[0] + self.size[0] == otherT[0]):
-                            newLock = (True, False, False, False)
-                        if (thisPos[0] == otherT[0] + otherBC.size[0]):
-                            newLock  = (False, True, False, False)
-                        if (thisPos[1] + self.size[1] == otherT[1]):
-                            newLock  = (False, False, True, False)
-                        if (thisPos[1] == otherT[1] + otherBC.size[1]):
-                            newLock  = (False, False, False, True)
+        thisTransform = self.gameObject.GetComponent(Transform)
+        thisTransform.positionLock = (False, False, False, False)
+        cs = AscE.FindObjectsWithComponent(BoxCollider)
+        for x in range(len(cs)):
+            if (cs[x].GetComponent(BoxCollider) != self):
+                otherBC = cs[x].GetComponent(BoxCollider)
+                otherT = cs[x].GetComponent(Transform)
+                otherT = otherT.RoundPosition(otherT.position)
+                thisPos = thisTransform.RoundPosition(thisTransform.position)
+                if (self.IsCollidingWithOther(thisPos, otherBC, otherT)):
+                    newLock = (False, False, False, False)
+                    if (thisPos.x + self.size.x == otherT.x):
+                        newLock = (True, False, False, False)
+                    if (thisPos.x == otherT.x + otherBC.size.x):
+                        newLock  = (False, True, False, False)
+                    if (thisPos.y + self.size.y == otherT.y):
+                        newLock  = (False, False, True, False)
+                    if (thisPos.y == otherT.y + otherBC.size.y):
+                        newLock  = (False, False, False, True)
 
-                        if (self.thisTransform.positionLock[0] == True):
-                            newLock = (True, newLock[1], newLock[2], newLock[3])
-                        if (self.thisTransform.positionLock[1] == True):
-                            newLock = (newLock[0], True, newLock[2], newLock[3])
-                        if (self.thisTransform.positionLock[2] == True):
-                            newLock = (newLock[0], newLock[1], True, newLock[3])
-                        if (self.thisTransform.positionLock[3] == True):
-                            newLock = (newLock[0], newLock[1], newLock[2], True)
-                        self.thisTransform.positionLock = newLock
+                    if (thisTransform.positionLock[0] == True):
+                        newLock = (True, newLock[1], newLock[2], newLock[3])
+                    if (thisTransform.positionLock[1] == True):
+                        newLock = (newLock[0], True, newLock[2], newLock[3])
+                    if (thisTransform.positionLock[2] == True):
+                        newLock = (newLock[0], newLock[1], True, newLock[3])
+                    if (thisTransform.positionLock[3] == True):
+                        newLock = (newLock[0], newLock[1], newLock[2], True)
+                    thisTransform.positionLock = newLock
                 
     def OnAwake(self):
-        pass   
+        pass
     def IsCollidingWithOther(self, thisPosition, otherCollider, otherColliderPosition):
         val = False
-        if thisPosition[0] <= otherColliderPosition[0] + otherCollider.size[0] and thisPosition[0] + self.size[0] >= otherColliderPosition[0]:
-            if thisPosition[1] <= otherColliderPosition[1] + otherCollider.size[1] and thisPosition[1] + self.size[1] >= otherColliderPosition[1]:
+        if thisPosition.x <= otherColliderPosition.x + otherCollider.size.x and thisPosition.x + self.size.x >= otherColliderPosition.x:
+            if thisPosition.y <= otherColliderPosition.y + otherCollider.size.y and thisPosition.y + self.size.y >= otherColliderPosition.y:
                 val = True
         return val
         
 class TopDownMovement(Component):
-    def __init__(self, thisObjectName, speed=1):
+    def __init__(self, speed=1):
         self.type = TopDownMovement
-        self.thisObjectName = thisObjectName
-        self.thisObject = "null"
         self.speed = speed
         Component.__init__(self, [Transform()])
     def OnUpdate(self):
-        didMove = False
-        if (self.thisObject == "null"):
-            self.thisObject = AscE.FindObject(self.thisObjectName)
         if (AscE.GetKey("up")):
-            t = self.thisObject.GetComponent(Transform)
-            pos = (t.position[0], t.position[1] - (self.speed * AscE.DeltaTime()))
+            t = self.gameObject.GetComponent(Transform)
+            pos = Vect2(t.position.x, t.position.y - (self.speed * AscE.DeltaTime()))
             t.MoveToPosition(pos)
         if (AscE.GetKey("down")):
-            t = self.thisObject.GetComponent(Transform)
-            pos = (t.position[0], t.position[1] + (self.speed * AscE.DeltaTime()))
+            t = self.gameObject.GetComponent(Transform)
+            pos = Vect2(t.position.x, t.position.y + (self.speed * AscE.DeltaTime()))
             t.MoveToPosition(pos)
         if (AscE.GetKey("left")):
-            t = self.thisObject.GetComponent(Transform)
-            pos = (t.position[0] - (self.speed * AscE.DeltaTime()), t.position[1])
+            t = self.gameObject.GetComponent(Transform)
+            pos = Vect2(t.position.x - (self.speed * AscE.DeltaTime()), t.position.y)
             t.MoveToPosition(pos)
         if (AscE.GetKey("right")):
-            t = self.thisObject.GetComponent(Transform)
-            pos = (t.position[0] + (self.speed * AscE.DeltaTime()), t.position[1])
+            t = self.gameObject.GetComponent(Transform)
+            pos = Vect2(t.position.x + (self.speed * AscE.DeltaTime()), t.position.y)
             t.MoveToPosition(pos)
     def OnAwake(self):
         pass
