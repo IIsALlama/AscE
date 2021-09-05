@@ -2,7 +2,7 @@ import os, time, sys, math
 sys.path.insert(0, './__AscE__/Libs')
 
 import keyboard
-#from keyboard import mouse
+from keyboard import mouse
 from termcolor import colored
 
 from Components import *
@@ -17,15 +17,15 @@ currentSceneIndex = 0
 def GetKey(key):
     return keyboard.is_pressed(key)
 
-# def MousePos():
-#     pos = mouse.get_position
-#     return Vect2(pos[0], pos[1])
+def MousePos():
+    pos = mouse.get_position
+    return Vect2(pos[0], pos[1])
 
-# def GetClickLeft():
-#     return mouse.is_pressed(mouse.LEFT)
+def GetClickLeft():
+    return mouse.is_pressed(mouse.LEFT)
 
-# def GetClickRight():
-#     return mouse.is_pressed(mouse.RIGHT)
+def GetClickRight():
+    return mouse.is_pressed(mouse.RIGHT)
 
 def DestroyObject(obj):
     global objects

@@ -31,10 +31,6 @@ def UpdateCode():#Update function runs every 0.01 seconds + time to run code for
                         objects[x].components[i].OnUpdate()
                     except Exception:
                         pass
-                try:
-                    objects[x].components[i].AfterUpdate()
-                except Exception:
-                    pass
         UpdateFrame()
         if (debug):
             print("Scene : " + scenes[CurrentScene()].__name__)
