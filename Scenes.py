@@ -20,8 +20,26 @@ class ExampleScene(Scene):
                      BoxCollider(False, Vect2(2, 2)),
                      TopDownMovement(50)]))
 
-        
-        
+        thisScene.sceneObjects.append(obj("Wall",
+                     [Transform(Vect2(0, 0)),
+                     QuadRenderer(2, "red", Vect2(6, 2), False),
+                     BoxCollider(False, Vect2(6, 2))]))
+
+        thisScene.sceneObjects.append(obj("BorderTop",
+                     [Transform(Vect2(-12, -13)),
+                      BoxCollider(False, Vect2(25, 1))]))
+
+        thisScene.sceneObjects.append(obj("BorderBottom",
+                     [Transform(Vect2(-12, 13)),
+                      BoxCollider(False, Vect2(25, 1))]))
+
+        thisScene.sceneObjects.append(obj("BorderLeft",
+                     [Transform(Vect2(-13, -12)),
+                      BoxCollider(False, Vect2(1, 25))]))
+
+        thisScene.sceneObjects.append(obj("BorderRight",
+                     [Transform(Vect2(13, -12)),
+                      BoxCollider(False, Vect2(1, 25))]))
         
 
     
